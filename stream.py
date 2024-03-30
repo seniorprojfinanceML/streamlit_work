@@ -30,16 +30,18 @@ x = list(df["time"][1440:])
 
 # Plotting the first line graph
 fig, ax = plt.subplots()
-ax.plot(x, pred)  # Assuming 'pred' is defined and correctly aligned with 'x'
+ax.plot(x, pred)
 plt.xticks(rotation=45)
 # plt.ylim(-0.01, 0.01)  # Setting custom y-axis limits
 ax.set_xlabel('Time')
-ax.set_ylabel('Predicted Value')
-ax.set_title('Predicted Values Over Time')
+ax.set_ylabel('Predicted Growth')
+ax.set_title('Predicted Growth Over Time')
 st.pyplot(fig)
 
-st.text(df['time'].iloc[0])
-st.text(df['time'].iloc[-1])
+start_time = f"Start Time: {df['time'].iloc[0]}"
+st.text(start_time)
+end_time = f"End Time: {df['time'].iloc[-1]}"
+st.text(end_time)
 
 # Plotting the second line graph
 fig, ax = plt.subplots()
@@ -48,4 +50,6 @@ ax.plot(x, pred, label='Predicted growth')
 ax.set_xlabel('Time')
 plt.xticks(rotation=45)
 ax.set_ylabel('Growth')
+ax.set_title('Predicted Growth VS Actual Growth Over Time')
+ax.legend()
 st.pyplot(fig)

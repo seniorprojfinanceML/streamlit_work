@@ -15,11 +15,14 @@ selected_table = st.selectbox('Choose a table', available_tables, index=default_
 default_start_date = datetime.today() - timedelta(days=15)
 selected_start_date = st.date_input("Choose a start date", default_start_date)
 
+default_value = "CBR"
+selected_model = st.text_input("Model:", value=default_value)
+
 table = selected_table
 # startDate = datetime(year=2024, month=2, day=25, hour=0, minute=0, second=0)
 startDate = datetime(year=selected_start_date.year, month=selected_start_date.month, day=selected_start_date.day, hour=0, minute=0, second=0)
 # analysis = Evaluation(table=table, startDate = startDate)
-analysis = Evaluation(table=table, startDate = startDate, alias = "production")
+analysis = Evaluation(table=table, startDate = startDate, model=selected_model, alias = "production")
 
 st.title('Visualization of Predicted Values Over Time')
 
@@ -27,6 +30,11 @@ df = analysis.df
 pred = analysis.pred
 actual = analysis.actual
 x = list(df["time"][1440:])
+
+start_time = f"Start Time: {df['time'].iloc[0]}"
+st.text(start_time)
+end_time = f"End Time: {df['time'].iloc[-1]}"
+st.text(end_time)
 
 # Plotting the first line graph
 fig, ax = plt.subplots()
@@ -38,11 +46,6 @@ ax.set_ylabel('Predicted Growth')
 ax.set_title('Predicted Growth Over Time')
 st.pyplot(fig)
 
-start_time = f"Start Time: {df['time'].iloc[0]}"
-st.text(start_time)
-end_time = f"End Time: {df['time'].iloc[-1]}"
-st.text(end_time)
-
 # Plotting the second line graph
 fig, ax = plt.subplots()
 ax.plot(x, actual, label='Actual growth')
@@ -53,3 +56,9 @@ ax.set_ylabel('Growth')
 ax.set_title('Predicted Growth VS Actual Growth Over Time')
 ax.legend()
 st.pyplot(fig)
+
+report = analysis.classification_report()
+st.text(report)
+
+mse = f"mse: {mean_squared_error(analysis.actual, analysis.pred)}"
+st.text(str(mse))

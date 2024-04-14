@@ -24,8 +24,11 @@ class Evaluation:
             print(f"analysis is done at {datetime.now()}")
             self.table = table if table is not None else f"crypto_ind_{currency}"
             self.startDate = startDate
+            if(self.startDate.date() >= date.today()):
+                raise ValueError("The provided datetime is today or future. No real data is available for evaluation.")
             print("querying")
             self.input, self.df = self.query()
+            print(len(self.df["time"]))
             if len(self.df["time"]) <= 1440:
                 raise ValueError("The provided startDate must precede the latest data in the data warehouse by at least one day.")
             print("processing")

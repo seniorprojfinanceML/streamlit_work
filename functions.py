@@ -87,6 +87,8 @@ class Evaluation:
         y = []
         for i in range(len(self.df) - 1440):
             y.append((close[i+1440]-close[i])/close[i])
+            # y.append((close[i+1440]-close[i]))
+            # y.append(close[i+1440]/close[i])
         return y
     
     def predict(self):

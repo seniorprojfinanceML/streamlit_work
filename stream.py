@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from sklearn.metrics import mean_squared_error
 from io import StringIO
 
-available_tables = ['crypto_ind_one', 'crypto_ind_adausdt']
+available_tables = ['crypto_ind_one', 'crypto_ind_adausdt', 'crypto_ind_ethusdt']
 default_index = available_tables.index('crypto_ind_one')
 selected_table = st.selectbox('Choose a table', available_tables, index=default_index)
 

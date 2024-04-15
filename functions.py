@@ -7,7 +7,7 @@ from sklearn.metrics import mean_squared_error
 from binance_historical_data import BinanceDataDumper
 from transform import transform
 class Evaluation:
-    def __init__(self, startDate: datetime, table = None, currency = None,
+    def __init__(self, startDate: datetime, endDate: datetime=None, table = None, currency = None,
                  query = True, url = None, model = "CBR", version = None, alias = None) -> None:
         # when created, query the database, preprocess, and call the model api
         # raise error if both table and currency are not provided
@@ -24,11 +24,14 @@ class Evaluation:
             print(f"analysis is done at {datetime.now()}")
             self.table = table if table is not None else f"crypto_ind_{currency}"
             self.startDate = startDate
-            if(self.startDate.date() >= date.today()):
-                raise ValueError("The provided datetime is today or future. No real data is available for evaluation.")
+            self.endDate = endDate
+            if self.startDate > self.endDate:
+                raise ValueError("startDate must be before endDate.")
+            if self.startDate.date() > date.today() or self.endDate.date() > date.today():
+                raise ValueError("The provided datetime is the future. No real data is available for evaluation.")
             print("querying")
             self.input, self.df = self.query()
-            print(len(self.df["time"]))
+            # print(len(self.df["time"]))
             if len(self.df["time"]) <= 1440:
                 raise ValueError("The provided startDate must precede the latest data in the data warehouse by at least one day.")
             print("processing")
@@ -50,16 +53,17 @@ class Evaluation:
             host=config.DATABASE_HOST,
             port=5432)
         cursor = conn.cursor()
-        query = f"""SELECT time, currency, close,
-        ma7_25h_scale, ma25_99h_scale, ma7_25d_scale from {self.table} where time >= '{self.startDate}'"""
-        cursor.execute(query = query)
+        query_1 = f"""SELECT time, currency, close,
+        ma7_25h_scale, ma25_99h_scale, ma7_25d_scale from {self.table} where time>='{self.startDate}' and time<='{self.endDate}'"""
+        cursor.execute(query = query_1)
         results = cursor.fetchall()
-        columns = ['time', 'currency','close',
-                   'ma7_25h_scale', 'ma25_99h_scale', 'ma7_25d_scale']
         
-        query = f"""SELECT close_minmax_scale, time from {self.table} where time >= '{(self.startDate)-timedelta(days=28)}'"""
-        cursor.execute(query = query)
+        columns = ['time', 'currency','close', 'ma7_25h_scale', 'ma25_99h_scale', 'ma7_25d_scale']
+        
+        query_2 = f"""SELECT close_minmax_scale, time from {self.table} where time>='{(self.startDate)-timedelta(days=28)}' and time<='{self.endDate}'"""
+        cursor.execute(query = query_2)
         price_results = cursor.fetchall()
+        print(f"len(price_results): {len(price_results)}")
         # print(price_results[:6])
         
         time_diff = [1, 25, 49, 73, 97, 121, 145, 169, 193, 217, 241, 265, 289, 313, 337, 361, 385, 409, 433, 467, 491, 515, 539, 563, 587, 611, 635, 672]
@@ -68,16 +72,14 @@ class Evaluation:
         # -1440 to ensure that the last day data is not used in the evaluaton (Since we will not have the actual growth for these values)
         for i in range (len(results)-1440):
             l = []
-            t = []
+            # 28 days = 24*28 = 672 hours = 672*60 minutes = 40320 minutes
             # Since price_results start from -672hrs, i+40320 => price at the current time
             l.append(price_results[i+40320][0])
-            t.append(price_results[i+40320][1])
+            # append the indicator values: ma7_25h_scale, ma25_99h_scale, ma7_25d_scale
             l.extend([results[i][3],results[i][4],results[i][5]])
             # i+672 => current time so i+40320-60 => price from -1 hour
             for e in time_diff:
                 l.append(price_results[i+40320-e*60][0])
-                t.append(price_results[i+40320-e*60][1])
-            # print(t)
             x.append(l)
         dataframe = pd.DataFrame([dict(zip(columns, result)) for result in results])
         cursor.close()

@@ -1,5 +1,5 @@
 fuser -k 8501/tcp
 
-streamlit run stream.py
+nohup streamlit run stream.py
 
 {"model":"CBR", "alias":"production", "input":[[1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4]]}
